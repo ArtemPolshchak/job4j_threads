@@ -5,5 +5,7 @@ public class App {
 
         System.out.println("Hello World!");
         System.out.println("I learn Git");
+
+        System.out.println("lets try make the merge");
     }
 }
