@@ -1,4 +1,4 @@
-package org.example;
+package ru.job4j;
 
 public class App {
     public static void main(String[] args) {
