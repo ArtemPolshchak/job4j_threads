@@ -6,6 +6,7 @@ public class ConsoleProgress implements Runnable {
         progress.start();
         Thread.sleep(5000);
         progress.interrupt();
+        progress.join();
     }
 
     @Override
@@ -21,7 +22,7 @@ public class ConsoleProgress implements Runnable {
                 }
                 Thread.sleep(500);
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                Thread.currentThread().interrupt();
             }
         }
     }
