@@ -16,7 +16,7 @@ public class ConsoleProgress implements Runnable {
         while (!Thread.currentThread().isInterrupted()) {
             try {
                 System.out.print("\r load: " + process[count++]);
-                if (count == 3) {
+                if (count == process.length) {
                     count = 0;
                 }
                 Thread.sleep(500);
