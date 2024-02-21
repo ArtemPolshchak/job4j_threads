@@ -1,6 +1,5 @@
 package ru.job4j.concurrent;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,42 +8,45 @@ import java.net.URL;
 public class Wget implements Runnable {
     private final String url;
     private final int speed;
+    private final String file;
+    private static final int SECOND = 1000;
 
-    public Wget(String url, int speed) {
+    public Wget(String url, int speed, String file) {
         this.url = url;
         this.speed = speed;
+        this.file = file;
     }
 
     @Override
     public void run() {
-        long startAt = System.currentTimeMillis();
-        File file = new File("tmp.xml");
-
         try (InputStream in = new URL(url).openStream();
              FileOutputStream out = new FileOutputStream(file)) {
 
-            System.out.println("Open connection: System.currentTimeMills:" + (System.currentTimeMillis() - startAt) + " ms");
-            System.out.println("Desired download speed: " + speed + " bytes/s");
-
-            byte[] dataBuffer = new byte[512];
+            long start = System.currentTimeMillis();
+            int totalBytesRead = 0;
             int bytesRead;
 
-            while ((bytesRead = in.read(dataBuffer, 0, dataBuffer.length)) != -1) {
-                long  downloadAt = System.nanoTime();
-                out.write(dataBuffer, 0, bytesRead);
-                long  downloadTime = System.nanoTime() - downloadAt;
-                long  downloadedBytes = dataBuffer.length * 1_000_000 / downloadTime;
+            while ((bytesRead = in.read()) != -1) {
+                out.write(bytesRead);
+                totalBytesRead += bytesRead;
 
-                System.out.println("Read " + bytesRead + " bytes in " + downloadTime + " nanoseconds.");
-                System.out.println("Downloaded " + downloadedBytes + " bytes.");
+                if (totalBytesRead >= speed) {
+                    long elapsedTime = System.currentTimeMillis() - start;
 
-                long sleepTime = downloadedBytes / speed;
+                    if (elapsedTime < SECOND) {
 
-                if (downloadedBytes > speed) {
-                    System.out.println("Sleeping for " + sleepTime + " milliseconds.");
-                    Thread.sleep(sleepTime);
+                        long sleepTime = SECOND - elapsedTime;
+                        Thread.sleep(sleepTime);
+
+                        System.out.println("sleep for: " + sleepTime);
+                        System.out.println("readBytes: " + totalBytesRead);
+                    }
+
+                    start = System.currentTimeMillis();
+                    totalBytesRead = 0;
                 }
             }
+
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
@@ -52,13 +54,13 @@ public class Wget implements Runnable {
 
     public static void main(String[] args) throws InterruptedException {
         if (args.length < 2) {
-            System.out.println("Usage: java Wget <URL> <speed>");
-            return;
+            throw new IllegalArgumentException("Usage: java Wget <URL> <speed>");
         }
         String url = args[0];
         int speed = Integer.parseInt(args[1]);
+        String file = args[2];
 
-        Thread wget = new Thread(new Wget(url, speed));
+        Thread wget = new Thread(new Wget(url, speed, file));
         wget.start();
         wget.join();
     }
