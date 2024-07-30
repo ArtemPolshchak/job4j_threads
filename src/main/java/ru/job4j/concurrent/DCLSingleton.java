@@ -4,7 +4,9 @@ public class DCLSingleton {
 
     private static volatile DCLSingleton instance;
 
-    private DCLSingleton() {}
+    private DCLSingleton() {
+
+    }
 
     /**
      * Ошибка в этом коде связана с отсутствием ключевого слова "volatile" при объявлении "instance"
