@@ -8,7 +8,7 @@ public class AccountStorage {
     private final ConcurrentHashMap<Integer, Account> accounts = new ConcurrentHashMap<>();
 
     public boolean add(Account account) {
-       return accounts.putIfAbsent(account.id(), account) == null;
+        return accounts.putIfAbsent(account.id(), account) == null;
     }
 
     public boolean update(Account account) {
@@ -24,38 +24,27 @@ public class AccountStorage {
     }
 
     public boolean transfer(int fromId, int toId, int amount) {
-        boolean result = false;
-        Integer lowerId = Math.min(fromId, toId);
-        Integer higherId = Math.max(fromId, toId);
+        synchronized (accounts) {
+            var fromOpt = getById(fromId);
+            var toOpt = getById(toId);
 
-        synchronized (lowerId) {
-            synchronized (higherId) {
-                Account from = accounts.get(fromId);
-                Account to = accounts.get(toId);
-
-                if (!areAccountsValid(from, to) || !hasSufficientFunds(from, amount)) {
-                    return result;
-                }
-
-                accounts.compute(fromId, (id, acc) ->
-                        new Account(acc.id(), acc.amount() - amount)
-                );
-
-                accounts.compute(toId, (id, acc) ->
-                        new Account(acc.id(), acc.amount() + amount)
-                );
-                result = true;
+            if (fromOpt.isEmpty() || toOpt.isEmpty() || !hasSufficientFunds(fromOpt.get(), amount)) {
+                return false;
             }
-        }
-        return result;
-    }
 
-    private boolean areAccountsValid(Account from, Account to) {
-        return from != null && to != null;
+            updateAccount(fromOpt.get(), -amount);
+            updateAccount(toOpt.get(), amount);
+
+            return true;
+        }
     }
 
     private boolean hasSufficientFunds(Account from, int amount) {
         return from.amount() >= amount;
+    }
+
+    private void updateAccount(Account account, int amountChange) {
+        update(new Account(account.id(), account.amount() + amountChange));
     }
 }
 
