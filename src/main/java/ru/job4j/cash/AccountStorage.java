@@ -28,23 +28,21 @@ public class AccountStorage {
             var fromOpt = getById(fromId);
             var toOpt = getById(toId);
 
-            if (fromOpt.isEmpty() || toOpt.isEmpty() || !hasSufficientFunds(fromOpt.get(), amount)) {
+            if (fromOpt.isEmpty() || toOpt.isEmpty()) {
                 return false;
             }
 
-            updateAccount(fromOpt.get(), -amount);
-            updateAccount(toOpt.get(), amount);
+            Account from = fromOpt.get();
+            Account to = toOpt.get();
+
+            if (from.amount() < amount) {
+                return false;
+            }
+
+            update(new Account(from.id(), from.amount() - amount));
+            update(new Account(to.id(), to.amount() + amount));
 
             return true;
         }
     }
-
-    private boolean hasSufficientFunds(Account from, int amount) {
-        return from.amount() >= amount;
-    }
-
-    private void updateAccount(Account account, int amountChange) {
-        update(new Account(account.id(), account.amount() + amountChange));
-    }
 }
-
